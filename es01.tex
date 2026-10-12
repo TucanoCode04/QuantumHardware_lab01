@@ -1,0 +1,115 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=2.2cm]{geometry}
+\usepackage{amsmath,amssymb}
+
+\newcommand{\ket}[1]{\left|#1\right\rangle}
+\newcommand{\bra}[1]{\left\langle#1\right|}
+\newcommand{\psit}[1]{\ket{\psi_{t_{#1}}}}
+\newcommand{\HH}{\begin{pmatrix} 1 & 1 & 1 & 1\\ 1 & -1 & 1 & -1\\ 1 & 1 & -1 & -1\\ 1 & -1 & -1 & 1 \end{pmatrix}}
+\newcommand{\XX}{\begin{pmatrix} 0 & 0 & 0 & 1\\ 0 & 0 & 1 & 0\\ 0 & 1 & 0 & 0\\ 1 & 0 & 0 & 0 \end{pmatrix}}
+\newcommand{\CZ}{\begin{pmatrix} 1 & 0 & 0 & 0\\ 0 & 1 & 0 & 0\\ 0 & 0 & 1 & 0\\ 0 & 0 & 0 & -1 \end{pmatrix}}
+
+\title{Quantum Hardware Design and Optimization\\ Laboratory 1 -- Exercise 1}
+\author{Group 4}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{Evaluation by hand of the state evolution}
+
+Two-qubit states are written as $\ket{q_0 q_1}$, with the basis ordered as
+$\ket{00},\ket{01},\ket{10},\ket{11}$.
+
+\subsection*{Layer 0 -- initial state}
+\[
+\psit{0} = \ket{0}\otimes\ket{0} =
+\begin{pmatrix}1\\0\end{pmatrix}\otimes\begin{pmatrix}1\\0\end{pmatrix} =
+\begin{pmatrix}1\\0\\0\\0\end{pmatrix} \;\rightarrow\; \ket{00}.
+\]
+
+\subsection*{Layer 1 -- $H\otimes H$}
+\[
+G_1 = H\otimes H =
+\frac{1}{\sqrt2}\begin{pmatrix}1&1\\1&-1\end{pmatrix}\otimes
+\frac{1}{\sqrt2}\begin{pmatrix}1&1\\1&-1\end{pmatrix} = \frac12\HH,
+\]
+\[
+\psit{1} = G_1\psit{0} = \frac12\HH\begin{pmatrix}1\\0\\0\\0\end{pmatrix}
+= \frac12\begin{pmatrix}1\\1\\1\\1\end{pmatrix} \;\rightarrow\; \ket{++}.
+\]
+
+\subsection*{Layer 2 -- $CZ$}
+\[
+G_2 = CZ = \CZ,
+\]
+\[
+\psit{2} = G_2\psit{1} = \frac12\CZ\begin{pmatrix}1\\1\\1\\1\end{pmatrix}
+= \frac12\begin{pmatrix}1\\1\\1\\-1\end{pmatrix}
+= \frac12\big(\ket{00}+\ket{01}+\ket{10}-\ket{11}\big).
+\]
+
+\subsection*{Layer 3 -- $H\otimes H$}
+\[
+\psit{3} = (H\otimes H)\psit{2} = \frac14\HH\begin{pmatrix}1\\1\\1\\-1\end{pmatrix}
+= \frac14\begin{pmatrix}2\\2\\2\\-2\end{pmatrix}
+= \frac12\begin{pmatrix}1\\1\\1\\-1\end{pmatrix}
+= \frac12\big(\ket{00}+\ket{01}+\ket{10}-\ket{11}\big).
+\]
+
+\subsection*{Layer 4 -- $X\otimes X$}
+\[
+X\otimes X = \begin{pmatrix}0&1\\1&0\end{pmatrix}\otimes\begin{pmatrix}0&1\\1&0\end{pmatrix} = \XX,
+\]
+\[
+\psit{4} = (X\otimes X)\psit{3} = \frac12\XX\begin{pmatrix}1\\1\\1\\-1\end{pmatrix}
+= \frac12\begin{pmatrix}-1\\1\\1\\1\end{pmatrix}
+= \frac12\big(-\ket{00}+\ket{01}+\ket{10}+\ket{11}\big).
+\]
+
+\subsection*{Layer 5 -- $CZ$}
+The controlled-$Z$ gate can be written as a sum of projectors on the control qubit:
+\[
+CZ = \ket{0}\bra{0}\otimes\mathbb{I} + \ket{1}\bra{1}\otimes Z
+= \begin{pmatrix}1&0\\0&0\end{pmatrix}\otimes\begin{pmatrix}1&0\\0&1\end{pmatrix}
++ \begin{pmatrix}0&0\\0&1\end{pmatrix}\otimes\begin{pmatrix}1&0\\0&-1\end{pmatrix}
+\]
+\[
+= \begin{pmatrix}1&0&0&0\\0&1&0&0\\0&0&0&0\\0&0&0&0\end{pmatrix}
++ \begin{pmatrix}0&0&0&0\\0&0&0&0\\0&0&1&0\\0&0&0&-1\end{pmatrix}
+= \CZ,
+\]
+\[
+\psit{5} = CZ\,\psit{4} = \frac12\CZ\begin{pmatrix}-1\\1\\1\\1\end{pmatrix}
+= \frac12\begin{pmatrix}-1\\1\\1\\-1\end{pmatrix}
+= \frac12\big(-\ket{00}+\ket{01}+\ket{10}-\ket{11}\big).
+\]
+
+\subsection*{Layer 6 -- $X\otimes X$}
+\[
+\psit{6} = (X\otimes X)\psit{5} = \frac12\XX\begin{pmatrix}-1\\1\\1\\-1\end{pmatrix}
+= \frac12\begin{pmatrix}-1\\1\\1\\-1\end{pmatrix}
+= \frac12\big(-\ket{00}+\ket{01}+\ket{10}-\ket{11}\big).
+\]
+
+\subsection*{Layer 7 -- $H\otimes H$}
+\[
+\psit{7} = (H\otimes H)\psit{6} = \frac14\HH\begin{pmatrix}-1\\1\\1\\-1\end{pmatrix}
+= \frac14\begin{pmatrix}0\\0\\0\\-4\end{pmatrix}
+= \begin{pmatrix}0\\0\\0\\-1\end{pmatrix} = -\ket{11}.
+\]
+
+\section*{Conclusion}
+The final state is $-\ket{11}$, i.e.\ $\ket{11}$ up to a global phase, so a measurement
+returns $11$ with probability $1$.
+
+The circuit is one iteration of Grover's algorithm on two qubits:
+\begin{itemize}
+  \item layer 1 creates the uniform superposition $\ket{++}$;
+  \item layer 2 ($CZ$) is the \emph{oracle}, which flips the phase of the marked state $\ket{11}$;
+  \item layers 3--7 ($H^{\otimes2}\,X^{\otimes2}\,CZ\,X^{\otimes2}\,H^{\otimes2}$) form the
+        \emph{diffuser} (inversion about the mean), which amplifies the amplitude of the marked state.
+\end{itemize}
+For $N=4$ elements a single Grover iteration is enough to find the marked element with certainty.
+
+\end{document}

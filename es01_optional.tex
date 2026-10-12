@@ -1,0 +1,116 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=2.2cm]{geometry}
+\usepackage{amsmath,amssymb}
+
+\newcommand{\ket}[1]{\left|#1\right\rangle}
+\newcommand{\bra}[1]{\left\langle#1\right|}
+\newcommand{\psit}[1]{\ket{\psi_{t_{#1}}}}
+\newcommand{\HH}{\begin{pmatrix} 1 & 1 & 1 & 1\\ 1 & -1 & 1 & -1\\ 1 & 1 & -1 & -1\\ 1 & -1 & -1 & 1 \end{pmatrix}}
+\newcommand{\IH}{\begin{pmatrix} 1 & 1 & 0 & 0\\ 1 & -1 & 0 & 0\\ 0 & 0 & 1 & 1\\ 0 & 0 & 1 & -1 \end{pmatrix}}
+\newcommand{\XX}{\begin{pmatrix} 0 & 0 & 0 & 1\\ 0 & 0 & 1 & 0\\ 0 & 1 & 0 & 0\\ 1 & 0 & 0 & 0 \end{pmatrix}}
+\newcommand{\CZ}{\begin{pmatrix} 1 & 0 & 0 & 0\\ 0 & 1 & 0 & 0\\ 0 & 0 & 1 & 0\\ 0 & 0 & 0 & -1 \end{pmatrix}}
+\newcommand{\CX}{\begin{pmatrix} 1 & 0 & 0 & 0\\ 0 & 1 & 0 & 0\\ 0 & 0 & 0 & 1\\ 0 & 0 & 1 & 0 \end{pmatrix}}
+
+\title{Quantum Hardware Design and Optimization\\ Laboratory 1 -- Exercise 1 (optional circuit)}
+\author{Group 4}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{Evaluation by hand of the state evolution}
+
+Two-qubit states are written as $\ket{q_0 q_1}$, with the basis ordered as
+$\ket{00},\ket{01},\ket{10},\ket{11}$.
+Layers 0--4 are identical to the ones of the main circuit.
+
+\subsection*{Layers 0--1 -- initial state and $H\otimes H$}
+\[
+\psit{0} = \ket{00}, \qquad
+\psit{1} = (H\otimes H)\psit{0} = \frac12\HH\begin{pmatrix}1\\0\\0\\0\end{pmatrix}
+= \frac12\begin{pmatrix}1\\1\\1\\1\end{pmatrix} \;\rightarrow\; \ket{++}.
+\]
+
+\subsection*{Layer 2 -- $CZ$}
+\[
+\psit{2} = CZ\,\psit{1} = \frac12\CZ\begin{pmatrix}1\\1\\1\\1\end{pmatrix}
+= \frac12\begin{pmatrix}1\\1\\1\\-1\end{pmatrix}
+= \frac12\big(\ket{00}+\ket{01}+\ket{10}-\ket{11}\big).
+\]
+
+\subsection*{Layer 3 -- $H\otimes H$}
+\[
+\psit{3} = (H\otimes H)\psit{2} = \frac14\HH\begin{pmatrix}1\\1\\1\\-1\end{pmatrix}
+= \frac14\begin{pmatrix}2\\2\\2\\-2\end{pmatrix}
+= \frac12\begin{pmatrix}1\\1\\1\\-1\end{pmatrix}
+= \frac12\big(\ket{00}+\ket{01}+\ket{10}-\ket{11}\big).
+\]
+
+\subsection*{Layer 4 -- $X\otimes X$}
+\[
+X\otimes X = \begin{pmatrix}0&1\\1&0\end{pmatrix}\otimes\begin{pmatrix}0&1\\1&0\end{pmatrix} = \XX,
+\]
+\[
+\psit{4} = (X\otimes X)\psit{3} = \frac12\XX\begin{pmatrix}1\\1\\1\\-1\end{pmatrix}
+= \frac12\begin{pmatrix}-1\\1\\1\\1\end{pmatrix}
+= \frac12\big(-\ket{00}+\ket{01}+\ket{10}+\ket{11}\big).
+\]
+
+\subsection*{Layer 5 -- $\mathbb{I}\otimes H$}
+\[
+\mathbb{I}\otimes H = \begin{pmatrix}1&0\\0&1\end{pmatrix}\otimes\frac{1}{\sqrt2}\begin{pmatrix}1&1\\1&-1\end{pmatrix}
+= \frac{1}{\sqrt2}\IH,
+\]
+\[
+\psit{5} = (\mathbb{I}\otimes H)\psit{4} = \frac{1}{2\sqrt2}\IH\begin{pmatrix}-1\\1\\1\\1\end{pmatrix}
+= \frac{1}{2\sqrt2}\begin{pmatrix}0\\-2\\2\\0\end{pmatrix}
+= \frac{1}{\sqrt2}\begin{pmatrix}0\\-1\\1\\0\end{pmatrix}
+= \frac{1}{\sqrt2}\big(-\ket{01}+\ket{10}\big).
+\]
+
+\subsection*{Layer 6 -- $CNOT$ (control $q_0$, target $q_1$)}
+\[
+CNOT = \ket{0}\bra{0}\otimes\mathbb{I} + \ket{1}\bra{1}\otimes X
+= \begin{pmatrix}1&0&0&0\\0&1&0&0\\0&0&0&0\\0&0&0&0\end{pmatrix}
++ \begin{pmatrix}0&0&0&0\\0&0&0&0\\0&0&0&1\\0&0&1&0\end{pmatrix}
+= \CX,
+\]
+\[
+\psit{6} = CNOT\,\psit{5} = \frac{1}{\sqrt2}\CX\begin{pmatrix}0\\-1\\1\\0\end{pmatrix}
+= \frac{1}{\sqrt2}\begin{pmatrix}0\\-1\\0\\1\end{pmatrix}
+= \frac{1}{\sqrt2}\big(-\ket{01}+\ket{11}\big).
+\]
+
+\subsection*{Layer 7 -- $\mathbb{I}\otimes H$}
+\[
+\psit{7} = (\mathbb{I}\otimes H)\psit{6} = \frac12\IH\begin{pmatrix}0\\-1\\0\\1\end{pmatrix}
+= \frac12\begin{pmatrix}-1\\1\\1\\-1\end{pmatrix}
+= \frac12\big(-\ket{00}+\ket{01}+\ket{10}-\ket{11}\big).
+\]
+
+\subsection*{Layer 8 -- $X\otimes X$}
+\[
+\psit{8} = (X\otimes X)\psit{7} = \frac12\XX\begin{pmatrix}-1\\1\\1\\-1\end{pmatrix}
+= \frac12\begin{pmatrix}-1\\1\\1\\-1\end{pmatrix}
+= \frac12\big(-\ket{00}+\ket{01}+\ket{10}-\ket{11}\big).
+\]
+
+\subsection*{Layer 9 -- $H\otimes H$}
+\[
+\psit{9} = (H\otimes H)\psit{8} = \frac14\HH\begin{pmatrix}-1\\1\\1\\-1\end{pmatrix}
+= \frac14\begin{pmatrix}0\\0\\0\\-4\end{pmatrix}
+= \begin{pmatrix}0\\0\\0\\-1\end{pmatrix} = -\ket{11}.
+\]
+
+\section*{Differences with the main circuit}
+The state $\psit{7}$ obtained here coincides with $\psit{5}$ of the main circuit, and the final
+state is again $-\ket{11}$. This is because the sequence of layers 5--7 is an equivalent
+implementation of the $CZ$ gate:
+\[
+(\mathbb{I}\otimes H)\,CNOT\,(\mathbb{I}\otimes H) = CZ,
+\]
+since $HXH = Z$ on the target qubit. The optional circuit is therefore the same Grover iteration,
+with the $CZ$ of the diffuser decomposed into $H$ and $CNOT$ gates; the price is a deeper circuit
+(two additional layers).
+
+\end{document}
